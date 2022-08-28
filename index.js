@@ -1,88 +1,80 @@
-const wrapper = document.querySelector(".wrapper");
-const input = wrapper.querySelector("input");
-const sugList = wrapper.querySelector(".suggestions");
-const addedRepos = wrapper.querySelector(".reps");
+  const wrapper = document.querySelector('.wrapper');
+  const input = wrapper.querySelector('input');
+  const sugList = wrapper.querySelector('.suggestions');
+  const addedRepos = wrapper.querySelector('.reps');
+  let data = []
 
-const debounce = (fn, debounceTime) => {
-  let timer;
-  return function () {
-    const funcCall = () => fn.apply(this, arguments);
+  const debounce = (fn, debounceTime) => {
+    let timer;
+    return function () {
+      const funcCall = () => fn.apply(this, arguments);
 
-    clearTimeout(timer);
+      clearTimeout(timer);
 
-    timer = setTimeout(funcCall, debounceTime);
+      timer = setTimeout(funcCall, debounceTime);
+    };
   };
-};
 
-input.addEventListener("keyup", () => {
-  if (!input.value.length) {
-    sugList.style.display = "none";
-    return;
+  let getData = async () => {
+    const response = await fetch( `https://api.github.com/search/repositories?q=${input.value}&sort=stars`)
+    data = await response.json()  
+    data = data.items
+
+    createSugList()
   }
 
-  createSugElements();
-  sugList.style.display = "block";
-});
+  getData = debounce(getData, 200)
 
-let createSugElements = async () => {
-  try {
-    await fetch(
-      `https://api.github.com/search/repositories?q=${input.value}&sort=stars`
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        while (sugList.firstChild) {
-          sugList.firstChild.remove();
-        }
+  const createElement = (tagName, className, text) => {
+    const element = document.createElement(tagName)
+    element.classList.add(className)
+    if (text){
+      element.innerText = text
+    }
 
-        let items = data.items;
-        items = items.filter((item) => item.name.includes(input.value));
+    return element
+  }
 
-        for (let i = 0; i < 5; i++) {
-          const item = items[i];
-          let element = document.createElement("li");
-          element.classList.add("suggestions__element");
-          element.innerText = item.name;
-          sugList.appendChild(element);
-        }
+  const createSugList = () => {
+    while (sugList.firstChild) {
+      sugList.firstChild.remove();
+    }
+    
+    data = data.filter((item) => item.name.includes(input.value));
 
-        sugList.addEventListener("click", (e) => {
-          for (let i in items) {
-            if (items[i].name === e.target.innerText) {
-              const target = items[i];
-              element = document.createElement("li");
-              element.classList.add("reps__element");
+    for (let i = 0; i < 5; i++) {
+      const item = data[i];
+      const sugListElement = createElement('li', 'suggestions__element', item.name)
+      sugList.appendChild(sugListElement);    
+  }
+  }
+  input.addEventListener('keyup', getData)
 
-              const repoName = document.createElement("p");
-              repoName.innerText = `Name: ${target.name}`;
-              element.appendChild(repoName);
+  sugList.addEventListener('click', (e) => {
+    for (let i in data) {
+      if (data[i].name === e.target.innerText) {
+        const target = data[i];
 
-              const repoOwner = document.createElement("p");
-              repoOwner.innerText = `Owner: ${target.owner.login}`;
-              element.appendChild(repoOwner);
+        const repsListElement = createElement('li', 'reps__element')
 
-              const repoStars = document.createElement("p");
-              repoStars.innerText = `Stars: ${target.stargazers_count}`;
-              element.appendChild(repoStars);
+        const repoName = createElement('p', 'reps__text', `Name: ${target.name}`)
+        repsListElement.appendChild(repoName);
 
-              const deleteBtn = document.createElement("div");
-              deleteBtn.classList.add("delete-btn");
-              deleteBtn.innerText = "delete";
-              element.appendChild(deleteBtn);
+        const repoOwner = createElement('p', 'reps__text', `Owner: ${target.owner.login}`)
+        repsListElement.appendChild(repoOwner);
 
-              addedRepos.appendChild(element);
+        const repoStars = createElement('p', 'reps__text', `Stars: ${target.stargazers_count}`)
+        repsListElement.appendChild(repoStars);        
 
-              deleteBtn.addEventListener("click", () => {
-                deleteBtn.closest(".reps__element").remove();
-              });
-              break;
-            }
-          }
+        const deleteBtn = createElement('div', 'delete-btn', 'delete')
+        repsListElement.appendChild(deleteBtn);
+
+        addedRepos.appendChild(repsListElement);
+
+        deleteBtn.addEventListener('click', () => {
+          deleteBtn.closest('.reps__element').remove();
         });
-      });
-  } catch (e) {
-    throw new Error(e);
-  }
-};
-
-createSugElements = debounce(createSugElements, 200);
+        break;
+      }
+    }
+  });
