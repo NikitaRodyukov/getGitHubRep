@@ -56,24 +56,19 @@ input {
 
 .delete-btn {
     position: absolute;
-    top: 40px;
+    display: block;
+    top: 45px;
     right: 40px;
-    width: 75px;
+    width: 80px;
     cursor: pointer;
+    background-color: #FF0000;
+    transform: rotate(45deg);
 }
 
 .delete-btn::after {
     display: block;
     content: '';
-    border: 3px solid #FF0000;
+    border: 2px solid #FF0000;
     background-color: #FF0000;
-    transform: rotate(45deg);
-}
-
-.delete-btn::before {
-    display: block;
-    content: '';
-    border: 3px solid #FF0000;
-    background-color: #FF0000;
-    transform: rotate(-45deg);
+    transform: rotate(90deg);
 }
